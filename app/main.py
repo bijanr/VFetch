@@ -11,11 +11,11 @@ logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 
-@app.route('/')
+@app.route('/') # api root directory to fetch html
 def index():
     return render_template('index.html')
 
-@app.route('/api/search')
+@app.route('/api/search') #/api/search?q=hey+jude
 def search():
     query = request.args.get('q')
     if not query:
@@ -29,7 +29,7 @@ def search():
     logger.info(f"Returning {len(analyzed_results)} analyzed results")
     return jsonify(analyzed_results)
 
-@app.route('/api/download')
+@app.route('/api/download') #api/download?url="Hey+jude+Remastered"&quality="360p"
 def download():
     video_url = request.args.get('url')
     quality = request.args.get('quality', '720p')

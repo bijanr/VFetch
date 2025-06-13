@@ -3,7 +3,7 @@ from bs4 import BeautifulSoup
 import json
 import logging
 
-# Set up logging
+# set up logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -23,19 +23,19 @@ def scrape_youtube(query: str):
         search_query = query.replace(" ", "+")
         url = f"https://www.youtube.com/results?search_query={search_query}"
 
-        # Set a user-agent to mimic a real browser
+        # set a user-agent to mimic a real browser
         headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
         }
 
         logger.info(f"Searching YouTube for: {query}")
         response = requests.get(url, headers=headers, timeout=10)
-        response.raise_for_status()  # Raise an exception for bad status codes
+        response.raise_for_status()  # raise an exception for bad status codes
 
         soup = BeautifulSoup(response.text, "html.parser")
         video_data = []
 
-        # YouTube search results are often embedded in a script tag as a JSON object
+        # youtube search results are often embedded in a script tag as a JSON object
         scripts = soup.find_all("script")
         found_data = False
         for script in scripts:
@@ -88,7 +88,7 @@ def scrape_youtube(query: str):
         return []
 
 if __name__ == '__main__':
-    # Example usage:
+    # example usage:
     search_results = scrape_youtube("Python tutorials for beginners")
     if search_results:
         for i, video in enumerate(search_results, 1):

@@ -3,9 +3,10 @@ import os
 import json
 from dotenv import load_dotenv
 import logging
+import google.generativeai as genai
 
 # Toggle Gemini ranking on/off
-ENABLE_GEMINI = True
+ENABLE_GEMINI = False
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -18,50 +19,81 @@ load_dotenv()
 # api_key = None
 # model = None
 
-# try:
-#     api_key = os.environ.get("GEMINI_API_KEY")
-#     if api_key:
-#         genai.configure(api_key=api_key)
-#         model = genai.GenerativeModel('models/gemini-1.5-flash')
-#         logger.info("Successfully configured Gemini API")
-#     else:
-#         logger.warning("GEMINI_API_KEY environment variable not set. Gemini analysis will be disabled.")
-# except Exception as e:
-#     logger.error(f"Error configuring Gemini API: {str(e)}")
-#     api_key = None
-#     model = None
+try:
+    api_key = os.environ.get("GEMINI_API_KEY")
+    if api_key:
+        genai.configure(api_key=api_key)
+        model = genai.GenerativeModel('models/gemini-1.5-flash')
+        logger.info("Successfully configured Gemini API")
+    else:
+        logger.warning("GEMINI_API_KEY environment variable not set. Gemini analysis will be disabled.")
+except Exception as e:
+    logger.error(f"Error configuring Gemini API: {str(e)}")
+    api_key = None
+    model = None
+
+# def analyze_and_rank_results(results: list) -> list:
+#     """
+#     Analyzes and ranks search results using the Gemini API.
+#     If Gemini API is not available, returns results without analysis.
+
+#     Args:
+#         results (list): A list of dictionaries, where each dictionary represents a scraped video.
+
+#     Returns:
+#         list: The modified list of dictionaries with 'safety_rating' and 'relevance_score',
+#               sorted by 'relevance_score'.
+#     """
+#     if not ENABLE_GEMINI:
+#         logger.info("Gemini ranking disabled. Returning results unchanged.")
+#         return results
+
+#     # If 'viewCount' or similar popularity metric is present, sort by it
+#     def get_popularity(item):
+#         # Try to extract view count or similar metric
+#         for key in ['viewCount', 'views', 'popularity']:
+#             if key in item:
+#                 try:
+#                     return int(item[key].replace(',', '').replace(' views', '').strip())
+#                 except Exception:
+#                     continue
+#         return 0  # Default if not found
+
+#     # Sort results by popularity descending, if possible
+#     ranked = sorted(results, key=get_popularity, reverse=True)
+#     logger.info("Gemini ranking applied: results sorted by popularity.")
+#     return ranked
 
 def analyze_and_rank_results(results: list) -> list:
     """
-    Analyzes and ranks search results using the Gemini API.
-    If Gemini API is not available, returns results without analysis.
-
-    Args:
-        results (list): A list of dictionaries, where each dictionary represents a scraped video.
-
-    Returns:
-        list: The modified list of dictionaries with 'safety_rating' and 'relevance_score',
-              sorted by 'relevance_score'.
+    Uses Gemini API to analyze and rank YouTube results.
+    Falls back to default popularity-based sorting if disabled or fails.
     """
-    if not ENABLE_GEMINI:
-        logger.info("Gemini ranking disabled. Returning results unchanged.")
+    if not ENABLE_GEMINI or model is None:
+        logger.info("Gemini ranking disabled or model not loaded. Returning results unchanged.")
         return results
 
-    # If 'viewCount' or similar popularity metric is present, sort by it
-    def get_popularity(item):
-        # Try to extract view count or similar metric
-        for key in ['viewCount', 'views', 'popularity']:
-            if key in item:
-                try:
-                    return int(item[key].replace(',', '').replace(' views', '').strip())
-                except Exception:
-                    continue
-        return 0  # Default if not found
+    try:
+        prompt = (
+            "Given the following YouTube search results as JSON, rank them by their relevance to a general user query, also avoid high scoring results if its less relatable compared to other queries. "
+            "Return the same JSON with added 'relevance_score' between 0 and 1 for each item:\n\n"
+            f"{json.dumps(results, indent=2)}"
+        )
+        logger.info("Sending prompt to Gemini...")
+        response = model.generate_content(prompt)
+        logger.info("Gemini response received.")
 
-    # Sort results by popularity descending, if possible
-    ranked = sorted(results, key=get_popularity, reverse=True)
-    logger.info("Gemini ranking applied: results sorted by popularity.")
-    return ranked
+        # Try parsing response
+        ranked = json.loads(response.text)
+
+        # Sort by relevance_score if available
+        ranked = sorted(ranked, key=lambda x: x.get("relevance_score", 0), reverse=False)
+        return ranked
+
+    except Exception as e:
+        logger.error(f"Gemini API failed: {str(e)}")
+        return results
+
 
 if __name__ == '__main__':
     # Example usage for testing
