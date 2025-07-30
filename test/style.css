@@ -46,7 +46,6 @@ h1 {
 .search-container{
     display: flex;
     justify-content: center;
-    align-items: center;
     gap: 12px;
     padding: 2px 0px;
     height: 8vh;
