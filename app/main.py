@@ -45,5 +45,5 @@ def download():
     # Redirect the user to the direct video URL
     return redirect(direct_url)
 
-if __name__ == '__main__':
-    app.run(debug=True)
+if __name__ == "__main__":
+    app.run()
