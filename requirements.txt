@@ -5,4 +5,3 @@ google-generativeai
 yt-dlp
 python-dotenv
 logging
-flask-cors
