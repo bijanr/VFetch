@@ -221,7 +221,7 @@ h1 {
   
   .search-container {
     flex-direction: column;
-    
+
     justify-content: space-around;
   }
   
@@ -235,6 +235,7 @@ h1 {
     flex-direction: column;
     align-items: center;
     min-width: 70px;
+    max-height: 170px;
   }
   #search-button span{
     margin-bottom: 20px;
